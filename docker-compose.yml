@@ -1,0 +1,108 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  admin_panel:
+    build:
+      context: .
+      dockerfile: admin_panel/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./admin_panel:/app/admin_panel
+      - ./shop_core:/app/shop_core
+      - media_data:/app/admin_panel/media
+      - static_data:/app/admin_panel/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        python admin_panel/manage.py migrate --noinput &&
+        python admin_panel/manage.py collectstatic --noinput &&
+        python admin_panel/manage.py ensure_superuser &&
+        python admin_panel/manage.py runserver 0.0.0.0:8000
+      "
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./bot:/app/bot
+      - ./shop_core:/app/shop_core
+      - media_data:/app/admin_panel/media
+      - bot_logs:/app/bot/logs
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+      admin_panel:
+        condition: service_started
+
+  # ── WebApp Build ──────────────────────────────────────────
+  # Runs npm install + vite build at RUNTIME where dns: works.
+  # BuildKit on Windows Docker Desktop blocks DNS during build,
+  # so we build in a runtime container instead.
+  webapp-builder:
+    image: node:20-alpine
+    working_dir: /build
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    volumes:
+      - ./webapp:/src:ro
+      - webapp_dist:/build/dist
+      - webapp_node_modules:/build/node_modules
+    command: >
+      sh -c "
+        echo '>>> Copying source files...' &&
+        cp /src/package.json /src/tsconfig.json /src/vite.config.ts /src/index.html /build/ &&
+        test -f /src/.npmrc && cp /src/.npmrc /build/ || true &&
+        cp -r /src/src /build/src &&
+        echo '>>> Installing dependencies...' &&
+        npm install --no-audit --no-fund --loglevel=warn &&
+        echo '>>> Building webapp...' &&
+        npm run build &&
+        echo '>>> WebApp build complete!'
+      "
+
+  # Nginx serves the built webapp
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - webapp_dist:/usr/share/nginx/html:ro
+    depends_on:
+      webapp-builder:
+        condition: service_completed_successfully
+      admin_panel:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  media_data:
+  static_data:
+  bot_logs:
+  webapp_dist:
+  webapp_node_modules:

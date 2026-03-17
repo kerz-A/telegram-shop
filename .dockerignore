@@ -1,0 +1,10 @@
+webapp/node_modules
+webapp/dist
+.git
+*.md
+.env
+.env.local
+__pycache__
+*.pyc
+.vscode
+.idea
