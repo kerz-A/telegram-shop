@@ -122,22 +122,28 @@ async def confirm_order(
 ):
     data = await state.get_data()
 
-    async with async_session() as session:
-        cart_repo = CartRepo(session)
-        items = await cart_repo.get_items(customer.id)
+    try:
+        async with async_session() as session:
+            cart_repo = CartRepo(session)
+            items = await cart_repo.get_items(customer.id)
 
-        if not items:
-            await callback.answer("Корзина пуста!", show_alert=True)
-            await state.clear()
-            return
+            if not items:
+                await callback.answer("Корзина пуста!", show_alert=True)
+                await state.clear()
+                return
 
-        order_repo = OrderRepo(session)
-        order = await order_repo.create_from_cart(
-            customer=customer,
-            full_name=data["full_name"],
-            address=data["address"],
-            cart_items=items,
-        )
+            order_repo = OrderRepo(session)
+            order = await order_repo.create_from_cart(
+                customer=customer,
+                full_name=data["full_name"],
+                address=data["address"],
+                cart_items=items,
+            )
+    except Exception as e:
+        logger.error("Failed to create order: %s", e)
+        await callback.answer("❌ Ошибка создания заказа. Попробуйте позже.", show_alert=True)
+        await state.clear()
+        return
 
     await state.clear()
 

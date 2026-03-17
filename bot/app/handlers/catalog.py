@@ -8,7 +8,6 @@ from aiogram.types import CallbackQuery, Message
 from bot.app.callbacks.factory import CategoryCB, PaginationCB, ProductCB
 from bot.app.config import settings
 from bot.app.db.engine import async_session
-from bot.app.db.models import Customer
 from bot.app.db.repositories.repo import CategoryRepo, ProductRepo
 from bot.app.keyboards.inline import (
     categories_keyboard,

@@ -1,11 +1,10 @@
 import logging
 
-from aiogram import Bot, F, Router
+from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.app.callbacks.factory import ProductCB
 from bot.app.config import settings
 from bot.app.db.engine import async_session
 from bot.app.db.models import Customer
