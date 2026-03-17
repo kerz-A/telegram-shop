@@ -1,9 +1,10 @@
 from django.db.models import Count, Q
 from rest_framework import generics, status, views
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
 
 from api.auth import TelegramWebAppAuthentication
-from shop.models import CartItem, Category, Order, OrderItem, Product
+from shop.models import CartItem, Category, Order, OrderItem, Product, Customer
 from shop_core.enums import OrderStatus
 
 from api.serializers import (
@@ -25,7 +26,10 @@ class TelegramAuthMixin:
 
     @property
     def customer(self):
-        return self.request.user  # set by TelegramWebAppAuthentication
+        user = self.request.user
+        if not isinstance(user, Customer):
+            raise NotAuthenticated("Требуется авторизация через Telegram Mini App")
+        return user
 
 
 # ─── Categories ─────────────────────────────────────────────────────
