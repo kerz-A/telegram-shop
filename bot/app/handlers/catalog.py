@@ -50,8 +50,12 @@ async def cmd_catalog(message: Message, state: FSMContext):
         reply_markup=categories_keyboard(categories),
     )
 
-    # Also offer WebApp button (only for valid HTTPS URLs)
-    if settings.webapp_url and settings.webapp_url.startswith("https://"):
+    # Also offer WebApp button (only for real HTTPS URLs, not placeholders)
+    if (
+        settings.webapp_url
+        and settings.webapp_url.startswith("https://")
+        and "your-domain" not in settings.webapp_url
+    ):
         await message.answer(
             "Или откройте полный каталог:",
             reply_markup=webapp_catalog_button(settings.webapp_url),

@@ -27,7 +27,12 @@ def main_menu_keyboard(webapp_url: str | None = None) -> ReplyKeyboardMarkup:
             KeyboardButton(text="❓ Помощь"),
         ],
     ]
-    if webapp_url:
+    # Only show WebApp button if URL is real HTTPS (not placeholder)
+    if (
+        webapp_url
+        and webapp_url.startswith("https://")
+        and "your-domain" not in webapp_url
+    ):
         rows.append([
             KeyboardButton(
                 text="🌐 Открыть магазин",
