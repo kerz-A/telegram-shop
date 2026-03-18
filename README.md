@@ -83,16 +83,29 @@ webapp-1          | start worker processes
 4. Добавить **FAQ** вопросы
 5. В Telegram: `/start` для начала работы
 
-### 4. Настройка Mini App (опционально)
+### 4. Mini App (WebApp)
 
-Для тестирования Mini App нужен HTTPS. Варианты:
-- **Cloudflare Tunnel**: `cloudflared tunnel --url http://localhost:3000`
-- **ngrok**: `ngrok http 3000`
+> **Важно:** Telegram Mini App работает **только через HTTPS**. Без HTTPS каталог доступен на `http://localhost:3000` в браузере, но кнопка «🌐 Открыть магазин» в Telegram не появится, а корзина/оформление заказа через Mini App будут недоступны. Бот при этом работает полностью.
+
+**Для продакшена** — разверните проект на сервере с доменом и SSL-сертификатом. Укажите в `.env`:
+```
+WEBAPP_URL=https://shop.your-domain.com
+```
+
+**Для локального тестирования** — используйте HTTPS-туннель:
+
+```bash
+# Вариант 1: Cloudflare Tunnel (рекомендуется, без interstitial-страниц)
+cloudflared tunnel --url http://localhost:3000
+
+# Вариант 2: ngrok (требует регистрацию)
+ngrok http 3000
+```
 
 После получения HTTPS URL:
-1. В `.env`: `WEBAPP_URL=https://your-url.trycloudflare.com`
-2. В **@BotFather**: `/setmenubutton` → выбрать бота → URL → текст кнопки
-3. `docker-compose up -d --force-recreate bot`
+1. В `.env`: `WEBAPP_URL=https://your-tunnel-url.trycloudflare.com`
+2. В **@BotFather**: `/setmenubutton` → выбрать бота → отправить URL → текст кнопки
+3. Пересоздать контейнер бота: `docker-compose up -d --force-recreate bot`
 
 ### 5. Настройка админ-чата
 

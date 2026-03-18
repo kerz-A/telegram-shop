@@ -74,7 +74,9 @@ async def _handle_start(message: Message, customer: Customer):
         await message.answer(
             "👋 Добро пожаловать в магазин!\n\n"
             "Для начала работы нажмите кнопку\n"
-            "📱 <b>«Поделиться контактом»</b> ниже.\n\n",
+            "📱 <b>«Поделиться контактом»</b> ниже.\n\n"
+            "<i>Ввод номера вручную не поддерживается — "
+            "используйте кнопку.</i>",
             parse_mode="HTML",
             reply_markup=contact_keyboard(),
         )
