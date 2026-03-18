@@ -12,7 +12,7 @@ from pathlib import Path
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.types import BotCommand
+from aiogram.types import BotCommand, BotCommandScopeAllGroupChats
 from aiohttp import web
 
 from bot.app.config import settings
@@ -58,13 +58,23 @@ def setup_logging():
 
 async def set_bot_commands(bot: Bot):
     """Register bot commands menu."""
-    commands = [
+    # Commands for all users (private chats)
+    user_commands = [
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="catalog", description="Каталог товаров"),
         BotCommand(command="cart", description="Корзина"),
         BotCommand(command="help", description="Помощь"),
     ]
-    await bot.set_my_commands(commands)
+    await bot.set_my_commands(user_commands)
+
+    # Commands for admin group chats
+    admin_commands = [
+        BotCommand(command="active_orders", description="Активные заказы"),
+    ]
+    await bot.set_my_commands(
+        admin_commands,
+        scope=BotCommandScopeAllGroupChats(),
+    )
 
 
 async def main():
