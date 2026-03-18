@@ -84,8 +84,13 @@ class TelegramWebAppAuthentication(authentication.BaseAuthentication):
     Expects header: Authorization: tma <initData>
     """
 
+    def authenticate_header(self, request):
+        """Return string to trigger 401 instead of 403 for unauthenticated."""
+        return "tma"
+
     def authenticate(self, request):
         auth_header = request.headers.get("Authorization", "")
+
         if not auth_header.startswith("tma "):
             return None
 
@@ -101,7 +106,6 @@ class TelegramWebAppAuthentication(authentication.BaseAuthentication):
         try:
             customer = Customer.objects.get(telegram_id=telegram_id)
         except Customer.DoesNotExist:
-            # Auto-create minimal customer profile
             customer = Customer.objects.create(
                 telegram_id=telegram_id,
                 first_name=user_data.get("first_name", ""),
@@ -109,5 +113,4 @@ class TelegramWebAppAuthentication(authentication.BaseAuthentication):
                 username=user_data.get("username", ""),
             )
 
-        # Return (user, auth) — we use customer as the "user" for DRF
         return (customer, None)

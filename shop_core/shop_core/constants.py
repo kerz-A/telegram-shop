@@ -3,6 +3,7 @@
 # Webhook actions
 ACTION_ORDER_STATUS_CHANGED = "order_status_changed"
 ACTION_START_BROADCAST = "start_broadcast"
+ACTION_NEW_ORDER = "new_order"
 
 # Pagination
 PRODUCTS_PER_PAGE = 8

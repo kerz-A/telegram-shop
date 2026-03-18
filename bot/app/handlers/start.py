@@ -73,7 +73,9 @@ async def _handle_start(message: Message, customer: Customer):
     if not customer.phone:
         await message.answer(
             "👋 Добро пожаловать в магазин!\n\n"
-            "Для начала работы, пожалуйста, поделитесь своим номером телефона:",
+            "Для начала работы нажмите кнопку\n"
+            "📱 <b>«Поделиться контактом»</b> ниже.\n\n",
+            parse_mode="HTML",
             reply_markup=contact_keyboard(),
         )
     else:
@@ -106,4 +108,20 @@ async def handle_contact(message: Message, customer: Customer):
         f"✅ Номер {phone} сохранён!\n\n"
         "Теперь вы можете пользоваться магазином. Выберите действие:",
         reply_markup=main_menu_keyboard(settings.webapp_url),
+    )
+
+
+async def _no_phone(message: Message, customer: Customer, **kwargs) -> bool:
+    """Filter: only match if customer has no phone."""
+    return not customer.phone
+
+
+@router.message(F.text, _no_phone)
+async def handle_text_without_phone(message: Message, customer: Customer):
+    """Catch text input from users who haven't shared their phone yet."""
+    await message.answer(
+        "⚠️ Пожалуйста, нажмите кнопку <b>«📱 Поделиться контактом»</b> ниже.\n\n"
+        "Ввод номера вручную не поддерживается.",
+        parse_mode="HTML",
+        reply_markup=contact_keyboard(),
     )

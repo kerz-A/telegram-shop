@@ -10,8 +10,9 @@ from aiohttp import web
 from aiogram import Bot
 
 from bot.app.services.broadcast import run_broadcast
-from bot.app.services.notification import notify_order_status
-from shop_core.constants import ACTION_ORDER_STATUS_CHANGED, ACTION_START_BROADCAST
+from bot.app.services.notification import notify_order_status, send_order_to_admin_chat
+from bot.app.keyboards.inline import admin_order_keyboard
+from shop_core.constants import ACTION_ORDER_STATUS_CHANGED, ACTION_START_BROADCAST, ACTION_NEW_ORDER
 from shop_core.enums import OrderStatus
 from shop_core.schemas import WebhookPayload
 
@@ -52,6 +53,27 @@ async def handle_webhook(request: web.Request) -> web.Response:
             )
         )
         return web.json_response({"status": "broadcast_started"})
+
+    elif payload.action == ACTION_NEW_ORDER:
+        data = payload.data
+        admin_chat_id = data.get("admin_chat_id")
+        if admin_chat_id:
+            items_text = "\n".join(
+                f"• {item['name']} × {item['quantity']} = {item['total']}₽"
+                for item in data["items"]
+            )
+            await send_order_to_admin_chat(
+                bot=bot,
+                admin_chat_id=int(admin_chat_id),
+                order_id=data["order_id"],
+                customer_name=data["customer_name"],
+                customer_phone=data["customer_phone"],
+                address=data["address"],
+                total=data["total"],
+                items_text=items_text,
+                keyboard=admin_order_keyboard(data["order_id"]),
+            )
+        return web.json_response({"status": "ok"})
 
     else:
         logger.warning("Unknown webhook action: %s", payload.action)

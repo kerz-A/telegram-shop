@@ -19,7 +19,7 @@ class Customer(models.Model):
     class Meta:
         db_table = "customers"
         ordering = ["-created_at"]
-        verbose_name = "Клиент"
+        verbose_name = "клиента"
         verbose_name_plural = "Клиенты"
 
     def __str__(self):
@@ -30,7 +30,12 @@ class Category(models.Model):
     """Product category with optional nesting."""
 
     name = models.CharField(max_length=255, verbose_name="Название")
-    slug = models.SlugField(max_length=255, unique=True)
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        verbose_name="URL-имя (slug)",
+        help_text="Латинские буквы, цифры, дефис. Например: headphones, electronics, men-clothes",
+    )
     parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
@@ -46,7 +51,7 @@ class Category(models.Model):
     class Meta:
         db_table = "categories"
         ordering = ["sort_order", "name"]
-        verbose_name = "Категория"
+        verbose_name = "категорию"
         verbose_name_plural = "Категории"
 
     def __str__(self):
@@ -79,7 +84,7 @@ class Product(models.Model):
     class Meta:
         db_table = "products"
         ordering = ["-created_at"]
-        verbose_name = "Товар"
+        verbose_name = "товар"
         verbose_name_plural = "Товары"
 
     def __str__(self):
@@ -106,7 +111,7 @@ class ProductImage(models.Model):
     class Meta:
         db_table = "product_images"
         ordering = ["sort_order"]
-        verbose_name = "Фото товара"
+        verbose_name = "фото товара"
         verbose_name_plural = "Фото товаров"
 
     def __str__(self):
@@ -134,7 +139,7 @@ class CartItem(models.Model):
     class Meta:
         db_table = "cart_items"
         unique_together = ["customer", "product"]
-        verbose_name = "Позиция корзины"
+        verbose_name = "позицию корзины"
         verbose_name_plural = "Корзина"
 
     def __str__(self):
@@ -172,7 +177,7 @@ class Order(models.Model):
     class Meta:
         db_table = "orders"
         ordering = ["-created_at"]
-        verbose_name = "Заказ"
+        verbose_name = "заказ"
         verbose_name_plural = "Заказы"
 
     def __str__(self):
@@ -200,7 +205,7 @@ class OrderItem(models.Model):
 
     class Meta:
         db_table = "order_items"
-        verbose_name = "Позиция заказа"
+        verbose_name = "позицию заказа"
         verbose_name_plural = "Позиции заказа"
 
     def __str__(self):
@@ -293,7 +298,7 @@ class Broadcast(models.Model):
     class Meta:
         db_table = "broadcasts"
         ordering = ["-created_at"]
-        verbose_name = "Рассылка"
+        verbose_name = "рассылку"
         verbose_name_plural = "Рассылки"
 
     def __str__(self):

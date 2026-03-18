@@ -105,19 +105,19 @@ async def main():
     await set_bot_commands(bot)
     logger.info("Bot commands registered")
 
-    # Create webhook server
+    # Create webhook server (always listen on 0.0.0.0)
     webhook_app = create_webhook_app(bot)
     runner = web.AppRunner(webhook_app)
     await runner.setup()
     site = web.TCPSite(
         runner,
-        settings.bot_webhook_host,
+        "0.0.0.0",
         settings.bot_webhook_port,
     )
     await site.start()
     logger.info(
         "Webhook server started on %s:%s",
-        settings.bot_webhook_host,
+        "0.0.0.0",
         settings.bot_webhook_port,
     )
 

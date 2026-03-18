@@ -8,11 +8,8 @@ from bot.app.callbacks.factory import OrderCB
 from bot.app.db.engine import async_session
 from bot.app.db.models import Customer
 from bot.app.db.repositories.repo import CartRepo, OrderRepo, SettingsRepo
-from bot.app.keyboards.inline import order_confirm_keyboard, order_payment_keyboard
-from bot.app.keyboards.reply import main_menu_keyboard
-from bot.app.config import settings as app_settings
+from bot.app.keyboards.inline import order_confirm_keyboard, order_payment_keyboard, admin_order_keyboard
 from bot.app.services.notification import send_order_to_admin_chat
-from bot.app.keyboards.inline import admin_order_keyboard
 from bot.app.states.order import OrderFSM
 from shop_core.enums import OrderStatus
 

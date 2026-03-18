@@ -10,7 +10,8 @@ export default function CatalogPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const { updateItem } = useCart();
+  const [addingId, setAddingId] = useState<number | null>(null);
+  const { items, updateItem } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,7 +39,11 @@ export default function CatalogPage() {
   }, [loadProducts]);
 
   const handleAddToCart = async (productId: number) => {
-    await updateItem(productId, 1);
+    setAddingId(productId);
+    const existing = items.find((i) => i.product.id === productId);
+    const newQty = (existing?.quantity || 0) + 1;
+    await updateItem(productId, newQty);
+    setTimeout(() => setAddingId(null), 800);
   };
 
   return (
@@ -80,14 +85,50 @@ export default function CatalogPage() {
         </div>
       ) : (
         <div className="product-grid">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={handleAddToCart}
-              onClick={(id) => navigate(`/product/${id}`)}
-            />
-          ))}
+          {products.map((product) => {
+            const cartItem = items.find((i) => i.product.id === product.id);
+            return (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={handleAddToCart}
+                onClick={() => {}}
+                adding={addingId === product.id}
+                cartQuantity={cartItem?.quantity}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Floating cart button */}
+      {items.length > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 16,
+            left: 16,
+            right: 16,
+            zIndex: 100,
+          }}
+        >
+          <button
+            onClick={() => navigate("/cart")}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: 12,
+              border: "none",
+              background: "var(--tg-theme-button-color, #2196F3)",
+              color: "var(--tg-theme-button-text-color, #fff)",
+              fontSize: 16,
+              fontWeight: 500,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            }}
+          >
+            🛒 Корзина · {items.reduce((s, i) => s + i.quantity, 0)} шт.
+          </button>
         </div>
       )}
     </div>

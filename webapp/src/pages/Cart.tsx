@@ -35,6 +35,21 @@ export default function CartPage() {
         <div className="empty-state">
           <div className="icon">🛒</div>
           <p>Корзина пуста</p>
+          <button
+            onClick={() => navigate("/")}
+            style={{
+              marginTop: 16,
+              padding: "12px 24px",
+              borderRadius: 10,
+              border: "none",
+              background: "var(--tg-theme-button-color, #2196F3)",
+              color: "var(--tg-theme-button-text-color, #fff)",
+              fontSize: 15,
+              cursor: "pointer",
+            }}
+          >
+            Перейти в каталог
+          </button>
         </div>
       </div>
     );

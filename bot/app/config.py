@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Telegram
     bot_token: str
-    webapp_url: str = "https://localhost:3000"
+    webapp_url: str = ""
 
     # Database
     postgres_db: str = "shop_db"

@@ -1,10 +1,15 @@
+import logging
+
+from django.conf import settings as django_settings
 from django.db.models import Count, Q
 from rest_framework import generics, status, views
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
 
+import httpx
+
 from api.auth import TelegramWebAppAuthentication
-from shop.models import CartItem, Category, Order, OrderItem, Product, Customer
+from shop.models import BotSettings, CartItem, Category, Order, OrderItem, Product, Customer
 from shop_core.enums import OrderStatus
 
 from api.serializers import (
@@ -161,6 +166,11 @@ class OrderCreateView(TelegramAuthMixin, views.APIView):
             customer=self.customer
         ).select_related("product")
 
+        if not cart_items.exists():
+            return Response(
+                {"error": "Корзина пуста"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         total = sum(item.product.price * item.quantity for item in cart_items)
 
         order = Order.objects.create(
@@ -183,6 +193,38 @@ class OrderCreateView(TelegramAuthMixin, views.APIView):
             for item in cart_items
         ]
         OrderItem.objects.bulk_create(order_items)
+
+        # Notify bot about new order (for admin chat)
+        try:
+            bot_settings = BotSettings.objects.first()
+            if bot_settings and bot_settings.admin_chat_id:
+                items_data = [
+                    {
+                        "name": oi.product_name,
+                        "quantity": oi.quantity,
+                        "total": str(oi.price * oi.quantity),
+                    }
+                    for oi in order_items
+                ]
+                httpx.post(
+                    django_settings.BOT_WEBHOOK_URL,
+                    json={
+                        "action": "new_order",
+                        "data": {
+                            "order_id": order.id,
+                            "customer_name": order.full_name,
+                            "customer_phone": order.phone,
+                            "address": order.address,
+                            "total": str(order.total),
+                            "admin_chat_id": str(bot_settings.admin_chat_id),
+                            "items": items_data,
+                        },
+                    },
+                    timeout=5.0,
+                )
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error("Failed to notify bot about new order: %s", e)
 
         # Clear cart
         cart_items.delete()

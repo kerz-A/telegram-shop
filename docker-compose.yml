@@ -93,6 +93,7 @@ services:
       - "3000:80"
     volumes:
       - webapp_dist:/usr/share/nginx/html:ro
+      - media_data:/app/media:ro
     depends_on:
       webapp-builder:
         condition: service_completed_successfully

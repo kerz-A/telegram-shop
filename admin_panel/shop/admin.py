@@ -12,7 +12,6 @@ from openpyxl.styles import Font, Alignment
 from shop.models import (
     BotSettings,
     Broadcast,
-    CartItem,
     Category,
     Customer,
     FAQ,
@@ -85,8 +84,10 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "parent", "sort_order", "is_active", "product_count"]
     list_filter = ["is_active", "parent"]
     search_fields = ["name", "slug"]
-    prepopulated_fields = {"slug": ("name",)}
     list_editable = ["sort_order", "is_active"]
+
+    def get_fields(self, request, obj=None):
+        return ["name", "slug", "parent", "sort_order", "is_active"]
 
     def product_count(self, obj):
         return obj.products.count()
@@ -192,7 +193,14 @@ class OrderAdmin(admin.ModelAdmin):
 
     @admin.action(description="📥 Экспорт оплаченных заказов в Excel")
     def export_paid_orders(self, request, queryset):
-        paid_orders = queryset.filter(status=OrderStatus.PAID)
+        # All orders that have been paid (including further stages)
+        paid_statuses = [
+            OrderStatus.PAID,
+            OrderStatus.PROCESSING,
+            OrderStatus.SHIPPED,
+            OrderStatus.DELIVERED,
+        ]
+        paid_orders = queryset.filter(status__in=paid_statuses)
         if not paid_orders.exists():
             messages.warning(request, "Нет оплаченных заказов для экспорта")
             return
@@ -201,7 +209,7 @@ class OrderAdmin(admin.ModelAdmin):
         ws = wb.active
         ws.title = "Оплаченные заказы"
 
-        headers = ["ID", "Клиент", "ФИО", "Телефон", "Адрес", "Сумма", "Дата"]
+        headers = ["ID", "Клиент", "ФИО", "Телефон", "Адрес", "Сумма", "Статус", "Дата"]
         header_font = Font(bold=True)
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
@@ -215,7 +223,8 @@ class OrderAdmin(admin.ModelAdmin):
             ws.cell(row=row_idx, column=4, value=order.phone)
             ws.cell(row=row_idx, column=5, value=order.address)
             ws.cell(row=row_idx, column=6, value=float(order.total))
-            ws.cell(row=row_idx, column=7, value=order.created_at.strftime("%Y-%m-%d %H:%M"))
+            ws.cell(row=row_idx, column=7, value=OrderStatus(order.status).label)
+            ws.cell(row=row_idx, column=8, value=order.created_at.strftime("%Y-%m-%d %H:%M"))
 
         for col in range(1, len(headers) + 1):
             ws.column_dimensions[chr(64 + col)].width = 20
@@ -265,8 +274,27 @@ class BotSettingsAdmin(admin.ModelAdmin):
 class BroadcastAdmin(admin.ModelAdmin):
     list_display = ["id", "text_preview", "status", "sent_count", "error_count", "created_at"]
     list_filter = ["status"]
-    readonly_fields = ["sent_count", "error_count"]
+    list_display_links = ["id", "text_preview"]
     actions = ["send_broadcast"]
+    fields = ["text", "image"]
+
+    def get_fields(self, request, obj=None):
+        """Show status and counters only for existing objects."""
+        if obj:
+            return ["text", "image", "status", "sent_count", "error_count"]
+        return ["text", "image"]
+
+    def get_readonly_fields(self, request, obj=None):
+        """Drafts: only counters readonly. Sent: everything readonly."""
+        if obj and obj.status not in (BroadcastStatus.DRAFT, BroadcastStatus.READY):
+            return ["text", "image", "status", "sent_count", "error_count"]
+        if obj:
+            return ["status", "sent_count", "error_count"]
+        return []
+
+    def has_change_permission(self, request, obj=None):
+        """Always allow opening edit form."""
+        return True
 
     def text_preview(self, obj):
         return obj.text[:60] + "..." if len(obj.text) > 60 else obj.text

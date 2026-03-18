@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { orderApi, profileApi, type CustomerProfile } from "../api/client";
 import { useCart } from "../context/CartContext";
@@ -25,8 +25,12 @@ export default function CheckoutPage() {
     return () => hideBackButton();
   }, [navigate, showBackButton, hideBackButton]);
 
+  // Guard against double submission
+  const submittingRef = useRef(false);
+
   // Submit handler
   const handleSubmit = useCallback(async () => {
+    if (submittingRef.current) return; // Prevent double click
     if (!fullName.trim()) {
       setError("Укажите ФИО");
       return;
@@ -37,6 +41,7 @@ export default function CheckoutPage() {
     }
     setError("");
     setSubmitting(true);
+    submittingRef.current = true;
 
     try {
       const order = await orderApi.create({
@@ -44,16 +49,17 @@ export default function CheckoutPage() {
         address: address.trim(),
       });
       await refreshCart();
+      hideMainButton();
       webApp?.showAlert(`Заказ #${order.id} оформлен! Ожидайте подтверждения.`, () => {
         webApp?.close();
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Ошибка оформления заказа";
       setError(msg);
-    } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
-  }, [fullName, address, refreshCart, webApp]);
+  }, [fullName, address, refreshCart, webApp, hideMainButton]);
 
   // Main button
   useEffect(() => {

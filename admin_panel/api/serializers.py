@@ -12,9 +12,14 @@ from shop.models import (
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
         fields = ["id", "image", "sort_order"]
+
+    def get_image(self, obj):
+        return obj.image.url if obj.image else None
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -43,10 +48,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     def get_first_image(self, obj):
         img = obj.images.first()
         if img:
-            request = self.context.get("request")
-            if request:
-                return request.build_absolute_uri(img.image.url)
-            return img.image.url
+            return img.image.url  # Relative path: /media/products/... (nginx proxies)
         return None
 
 

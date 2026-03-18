@@ -1,13 +1,12 @@
 import logging
 
-from aiogram import Bot, F, Router
+from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from bot.app.callbacks.factory import AdminOrderCB
 from bot.app.db.engine import async_session
-from bot.app.db.models import Customer
-from bot.app.db.repositories.repo import OrderRepo, SettingsRepo
+from bot.app.db.repositories.repo import OrderRepo
 from bot.app.filters.is_admin import IsAdmin
 from bot.app.keyboards.inline import admin_order_keyboard
 from bot.app.services.notification import notify_order_status
