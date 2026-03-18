@@ -74,9 +74,7 @@ async def _handle_start(message: Message, customer: Customer):
         await message.answer(
             "👋 Добро пожаловать в магазин!\n\n"
             "Для начала работы нажмите кнопку\n"
-            "📱 <b>«Поделиться контактом»</b> ниже.\n\n"
-            "<i>Ввод номера вручную не поддерживается — "
-            "используйте кнопку.</i>",
+            "📱 <b>«Поделиться контактом»</b> ниже.",
             parse_mode="HTML",
             reply_markup=contact_keyboard(),
         )
@@ -122,8 +120,7 @@ async def _no_phone(message: Message, customer: Customer, **kwargs) -> bool:
 async def handle_text_without_phone(message: Message, customer: Customer):
     """Catch text input from users who haven't shared their phone yet."""
     await message.answer(
-        "⚠️ Пожалуйста, нажмите кнопку <b>«📱 Поделиться контактом»</b> ниже.\n\n"
-        "Ввод номера вручную не поддерживается.",
+        "📱 Пожалуйста, нажмите кнопку <b>«Поделиться контактом»</b> ниже.",
         parse_mode="HTML",
         reply_markup=contact_keyboard(),
     )
